@@ -14,15 +14,15 @@ export const attrNameList = [
     value: 0,   
     attrValue: [
       {
-        label: 'iPhone 14',
+        label: 'iPhone 12',
         value: 10
       },
       {
-        label: 'iPhone 14 Pro',
+        label: 'iPhone 13',
         value: 11
       },
       {
-        label: 'iPhone 14 Pro Max',
+        label: 'iPhone 14',
         value: 12
       },
     ] 
