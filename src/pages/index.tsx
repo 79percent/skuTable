@@ -4,15 +4,13 @@ import {
 	ProFormSelect,
 	ProTable,
 	ProFormList,
-	ProFormGroup,
-	ProFormText,
 } from "@ant-design/pro-components";
-import { Alert, Button, Col, Form, Row } from "antd";
+import { Alert, Button, Form, Row } from "antd";
 import { useState } from "react";
 import { randomString, attrNameList, attrValueList } from "./utils";
 import styles from "./index.less";
 import type { ProColumns } from "@ant-design/pro-components";
-import { CloseCircleOutlined, PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 
 const originColumns: ProColumns<any>[] = [
 	{
@@ -72,7 +70,7 @@ export default function HomePage() {
 			let attrValue: any[] = values[formAttrValue] || [];
 			attrValue = attrValue.map((item) => {
 				return {
-					...item,
+					...item.value,
 					chileren: [],
 				};
 			});
@@ -231,8 +229,11 @@ export default function HomePage() {
 					}
 				});
 				return {
+					id: randomString(20),
+					oprice: undefined,
+					cprice: undefined,
+					stock: undefined,
 					...oldItem,
-					id: oldItem?.id || randomString(20),
 					skuList,
 				};
 			})
@@ -337,8 +338,7 @@ export default function HomePage() {
 				form={form}
 				layout="horizontal"
 				onValuesChange={(changeValues, allValues) => {
-					console.log('onValuesChange', allValues);
-					setFormValues(allValues)
+					setFormValues(allValues);
 				}}
 				labelCol={{
 					span: 4,
@@ -363,7 +363,6 @@ export default function HomePage() {
 									onSelect: (item) => handleSelectAttrName(item, index),
 									onChange: () => {
 										const values = form.getFieldsValue();
-										console.log(values)
 										form?.resetFields([formAttrValue]);
 									},
 								}}
@@ -375,7 +374,7 @@ export default function HomePage() {
 									}))
 								}
 								style={{
-									width: 200
+									width: 200,
 								}}
 								rules={[
 									{
@@ -397,19 +396,24 @@ export default function HomePage() {
 										creatorButtonText: "添加",
 										icon: false,
 										type: "link",
+										disabled: !formValues?.[formAttrValue]?.every(
+											(item: any) => item?.value
+										),
 										style: { width: "unset" },
 									}}
 									min={1}
 									initialValue={[
 										{
-											value: undefined
-										}
+											value: undefined,
+										},
 									]}
-									onAfterRemove={(a, b) => {
-										console.log(a, b)
-									}}
+									onAfterRemove={handleDeleteAttrValue}
 									copyIconProps={false}
-									deleteIconProps={{ tooltipText: "删除" }}
+									deleteIconProps={
+										formValues?.[formAttrValue]?.length > 1 && {
+											tooltipText: "删除",
+										}
+									}
 									itemRender={({ listDom, action }) => (
 										<div
 											style={{
@@ -431,13 +435,13 @@ export default function HomePage() {
 											onDeselect: (item) => handleDeleteAttrValue(item, index),
 										}}
 										params={{
-											attrNameValue: formValues?.[formAttrName]?.value
+											attrNameValue: formValues?.[formAttrName]?.value,
 										}}
 										request={async (params) => {
 											return attrValueList(params?.attrNameValue);
 										}}
 										style={{
-											width: 200
+											width: 200,
 										}}
 										rules={[
 											{
@@ -493,17 +497,18 @@ export default function HomePage() {
 				<Alert message={alertVisile.msg} type="error" showIcon />
 			)}
 			{/* 提交按钮 */}
-			<Row style={{ marginTop: 16 }}>
-				<Col offset={6}>
-					<Button
-						type="primary"
-						onClick={async () => {
-							await validateFieldsTableData();
-						}}
-					>
-						提交
-					</Button>
-				</Col>
+			<Row style={{ marginTop: 16, width: '100%' }} justify="center" align="middle">
+				<Button
+					type="primary"
+					style={{
+						width: 120
+					}}
+					onClick={async () => {
+						await validateFieldsTableData();
+					}}
+				>
+					提交
+				</Button>
 			</Row>
 		</ProCard>
 	);
