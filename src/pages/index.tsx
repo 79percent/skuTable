@@ -4,15 +4,13 @@ import {
 	ProFormSelect,
 	ProTable,
 	ProFormList,
-	ProFormGroup,
-	ProFormText,
 } from "@ant-design/pro-components";
-import { Alert, Button, Col, Form, Row } from "antd";
+import { Alert, Button, Form, Row } from "antd";
 import { useState } from "react";
 import { randomString, attrNameList, attrValueList } from "./utils";
 import styles from "./index.less";
 import type { ProColumns } from "@ant-design/pro-components";
-import { CloseCircleOutlined, SmileOutlined } from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 
 const originColumns: ProColumns<any>[] = [
 	{
@@ -46,6 +44,7 @@ const originColumns: ProColumns<any>[] = [
 export default function HomePage() {
 	const [form] = Form.useForm();
 	const [editableForm] = Form.useForm();
+	const [formValues, setFormValues] = useState<any>(null);
 	const [skuKeyList, setSkuKeyList] = useState<any[]>([]);
 	const [dataSource, setDataSource] = useState<any[]>([]);
 	const [activeColumns, setActiveColumns] = useState<any[]>([]);
@@ -71,7 +70,7 @@ export default function HomePage() {
 			let attrValue: any[] = values[formAttrValue] || [];
 			attrValue = attrValue.map((item) => {
 				return {
-					...item,
+					...item.value,
 					chileren: [],
 				};
 			});
@@ -230,8 +229,11 @@ export default function HomePage() {
 					}
 				});
 				return {
+					id: randomString(20),
+					oprice: undefined,
+					cprice: undefined,
+					stock: undefined,
 					...oldItem,
-					id: oldItem?.id || randomString(20),
 					skuList,
 				};
 			})
@@ -316,7 +318,7 @@ export default function HomePage() {
 			);
 		});
 		if (hasEmpty) {
-			const msg = "请添加规格项、销售价、成本价、库存";
+			const msg = "请添加规格值、销售价、成本价、库存";
 			setAlertVisile({
 				show: true,
 				msg,
@@ -336,13 +338,13 @@ export default function HomePage() {
 				form={form}
 				layout="horizontal"
 				onValuesChange={(changeValues, allValues) => {
-					console.log(allValues)
+					setFormValues(allValues);
 				}}
 				labelCol={{
-					span: 6,
+					span: 4,
 				}}
 				wrapperCol={{
-					span: 6,
+					span: 16,
 				}}
 				submitter={false}
 			>
@@ -360,15 +362,20 @@ export default function HomePage() {
 									labelInValue: true,
 									onSelect: (item) => handleSelectAttrName(item, index),
 									onChange: () => {
+										const values = form.getFieldsValue();
 										form?.resetFields([formAttrValue]);
 									},
 								}}
+								initialValue={undefined}
 								request={async () =>
 									attrNameList.map((item) => ({
 										label: item.label,
 										value: item.value,
 									}))
 								}
+								style={{
+									width: 200,
+								}}
 								rules={[
 									{
 										required: true,
@@ -376,28 +383,75 @@ export default function HomePage() {
 									},
 								]}
 							/>
-							<ProFormSelect
+							<ProForm.Item
+								isListField
 								label="规格值"
-								name={formAttrValue}
-								dependencies={[formAttrName]}
-								mode="multiple"
-								fieldProps={{
-									allowClear: false,
-									labelInValue: true,
-									onSelect: (item) => handleAddAttrValue(item, index),
-									onDeselect: (item) => handleDeleteAttrValue(item, index),
+								wrapperCol={{
+									span: 16,
 								}}
-								request={async (params) => {
-									const attrNameValue = params[formAttrName]?.value;
-									return attrValueList(attrNameValue);
-								}}
-								rules={[
-									{
-										required: true,
-										message: "请选择规格值",
-									},
-								]}
-							/>
+							>
+								<ProFormList
+									name={formAttrValue}
+									creatorButtonProps={{
+										creatorButtonText: "添加",
+										icon: false,
+										type: "link",
+										disabled: !formValues?.[formAttrValue]?.every(
+											(item: any) => item?.value
+										),
+										style: { width: "unset" },
+									}}
+									min={1}
+									initialValue={[
+										{
+											value: undefined,
+										},
+									]}
+									onAfterRemove={handleDeleteAttrValue}
+									copyIconProps={false}
+									deleteIconProps={
+										formValues?.[formAttrValue]?.length > 1 && {
+											tooltipText: "删除",
+										}
+									}
+									itemRender={({ listDom, action }) => (
+										<div
+											style={{
+												display: "inline-flex",
+												marginInlineEnd: 25,
+											}}
+										>
+											{listDom}
+											{action}
+										</div>
+									)}
+								>
+									<ProFormSelect
+										name={["value"]}
+										fieldProps={{
+											allowClear: false,
+											labelInValue: true,
+											onSelect: (item) => handleAddAttrValue(item, index),
+											onDeselect: (item) => handleDeleteAttrValue(item, index),
+										}}
+										params={{
+											attrNameValue: formValues?.[formAttrName]?.value,
+										}}
+										request={async (params) => {
+											return attrValueList(params?.attrNameValue);
+										}}
+										style={{
+											width: 200,
+										}}
+										rules={[
+											{
+												required: true,
+												message: "请选择规格值",
+											},
+										]}
+									/>
+								</ProFormList>
+							</ProForm.Item>
 							<Button
 								type="primary"
 								danger
@@ -410,8 +464,13 @@ export default function HomePage() {
 					);
 				})}
 				{/* 添加规格项 按钮 */}
-				<ProForm.Item label="" wrapperCol={{ offset: 6 }}>
-					<Button type="primary" onClick={handleAddSkuItem}>
+				<ProForm.Item label="" wrapperCol={{ span: 24 }}>
+					<Button
+						type="dashed"
+						icon={<PlusOutlined />}
+						style={{ width: "100%" }}
+						onClick={handleAddSkuItem}
+					>
 						添加规格项
 					</Button>
 				</ProForm.Item>
@@ -438,17 +497,18 @@ export default function HomePage() {
 				<Alert message={alertVisile.msg} type="error" showIcon />
 			)}
 			{/* 提交按钮 */}
-			<Row style={{ marginTop: 16 }}>
-				<Col offset={6}>
-					<Button
-						type="primary"
-						onClick={async () => {
-							await validateFieldsTableData();
-						}}
-					>
-						提交
-					</Button>
-				</Col>
+			<Row style={{ marginTop: 16, width: '100%' }} justify="center" align="middle">
+				<Button
+					type="primary"
+					style={{
+						width: 120
+					}}
+					onClick={async () => {
+						await validateFieldsTableData();
+					}}
+				>
+					提交
+				</Button>
 			</Row>
 		</ProCard>
 	);
