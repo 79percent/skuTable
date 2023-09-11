@@ -8,7 +8,7 @@ import {
 import { Alert, Button, Form, Row } from "antd";
 import { useState } from "react";
 import { randomString, attrNameList, attrValueList } from "./utils";
-import styles from "./index.less";
+import "./index.css";
 import type { ProColumns } from "@ant-design/pro-components";
 import { PlusOutlined } from "@ant-design/icons";
 
@@ -353,7 +353,7 @@ export default function HomePage() {
 					const formAttrName = `attrName_${key}`;
 					const formAttrValue = `attrValue_${key}`;
 					return (
-						<div key={key} className={styles.attrCard}>
+						<div key={key} className="attrCard">
 							<ProFormSelect
 								label="规格名"
 								name={formAttrName}
@@ -455,7 +455,7 @@ export default function HomePage() {
 							<Button
 								type="primary"
 								danger
-								className={styles.deleteAttr}
+								className="deleteAttr"
 								onClick={() => handleDeleteSkuItem(index)}
 							>
 								删除规格项
